@@ -66,7 +66,7 @@ def prod_ESMs_cmip5_tempems():
   #Write the combined data to a CSV file
   out_file = 'Data/ESM_cmip5_tempems.csv'
   f_out = open(out_file,'w')
-  f_out.write('Model,Scenario,Variable,Unit,First_Year,'+','.join([str(f) for f in years]))
+  f_out.write('Model,Scenario,Variable,Unit,First_Year,'+','.join([str(f) for f in years])+'\n')
 
   for i in range(0,len(out_data)):
     f_out.write(','.join([str(f) for f in out_data[i]])+'\n')
