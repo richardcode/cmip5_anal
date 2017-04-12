@@ -14,7 +14,7 @@ def prod_ESMs_cmip5_tempems():
   wanted_vars = ['Temperature_abrupt','Emissions_abrupt','Temperature','Emissions']
   exp_name = ['1pctCO2','abrupt4xCO2']
   #var_name = ['tas','fCO2antt']
-  var_name = ['Temperature|anom for piControl','Total anthropogenic carbon flux']
+  var_name = ['Temperature|anom from piControl','Total anthropogenic carbon flux']
   units = ['K','PgC/yr']
   mv = df.missing_value
 
@@ -29,11 +29,23 @@ def prod_ESMs_cmip5_tempems():
   for i in range(0,len(mods_name)):
     for j in range(0,len(wanted_vars)):
       nc_data =  np.copy(df.variables[wanted_vars[j]].data[i])
+      if j in [0,2]:
+        out_log = nc_data==mv
       nc_data[nc_data==mv] = 'nan'
-      d_row = [mods_name[i]] + scen_dict[wanted_vars[j]]+['0'] + list(nc_data)
-      out_data.append(d_row)
       if j in [1,3]:
-        d_row = [mods_name[i]]+[scen_dict[wanted_vars[j]][0]]+['Total cumulative CO2 emissions|since first year','PgC','0'] + list(np.cumsum(nc_data))
+        nc_data[out_log]= 'nan'
+        nc_data = nc_data * 1000.0
+      if j in [1,3]:
+        diff_data = [nc_data[0]]
+        for x in range(1,len(list(nc_data))):
+          diff_data.append(nc_data[x]-nc_data[x-1])
+        d_row = [mods_name[i]] + scen_dict[wanted_vars[j]] + [0] + diff_data
+        out_data.append(d_row)
+      if j in [1,3]:
+        d_row = [mods_name[i]]+[scen_dict[wanted_vars[j]][0]]+['Total cumulative CO2 emissions','PgC',0] + list(nc_data)
+        out_data.append(d_row)
+      if j in [0,2]:
+        d_row = [mods_name[i]] + scen_dict[wanted_vars[j]] + [0] + list(nc_data)
         out_data.append(d_row)
 
   #Load the csv files for the RCPs
@@ -43,8 +55,8 @@ def prod_ESMs_cmip5_tempems():
   padding = (len(years) - len(rcp_years)) * [np.nan]
 
   for sen in rcps:
-    t_data = np.genfromtxt('Data/AR5WGISPM10_rawmodeldata_FINAL_rcp'+sen+'temp.csv',skiprows=2,delimiter=',',dtype=dt_rcp)
-    cum_e_data = np.genfromtxt('Data/AR5WGISPM10_rawmodeldata_FINAL_rcp'+sen+'cumc.csv',skiprows=2,delimiter=',',dtype=dt_rcp)
+    t_data = np.genfromtxt('Data/AR5WGISPM10_rawmodeldata_FINAL_rcp'+sen+'temp.csv',skip_header=2,delimiter=',',dtype=dt_rcp)
+    cum_e_data = np.genfromtxt('Data/AR5WGISPM10_rawmodeldata_FINAL_rcp'+sen+'cumc.csv',skip_header=2,delimiter=',',dtype=dt_rcp)
 
     #Make the arrays into a useful format
     for i in range(0,t_data.shape[0]):
